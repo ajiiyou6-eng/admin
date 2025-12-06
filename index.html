@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>XINNDESAINER — Admin Panel (connected)</title>
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<style>
+:root{
+  --bg:#071026;
+  --card:#0d1621;
+  --muted:#9fb0c9;
+  --accent:#00f0ff;
+  --danger:#ff6b6b;
+}
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial;margin:0;padding:0}
+body{background:linear-gradient(180deg,#02030a,#071026);color:#eaf6ff;min-height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.header h1{color:var(--accent);font-size:18px}
+.container{max-width:1100px;margin:18px auto;padding:18px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);padding:14px;border-radius:10px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.row{grid-template-columns:1fr}}
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff;margin-bottom:10px}
+button{background:linear-gradient(90deg,var(--accent),#ff2d7b);border:none;padding:10px 12px;border-radius:10px;color:#02111a;font-weight:700;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px;border-radius:8px}
+.small{font-size:13px;color:var(--muted)}
+.list{max-height:300px;overflow:auto;padding:8px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03);background:rgba(0,0,0,0.06)}
+.kbd{background:#07142a;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03)}
+.flex{display:flex;gap:8px;align-items:center}
+.hidden{display:none}
+.footer{padding:12px;text-align:center;color:var(--muted);font-size:13px}
+.statusOnline{color:#7cff00}
+.statusOffline{color:#ff7b7b}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>XINNDESAINER Admin (connected)</h1>
+  <div class="flex">
+    <div class="small">Status: <span id="connStatus" class="kbd">—</span></div>
+    <div id="adminBadge" class="kbd hidden">Admin</div>
+    <button id="logoutBtn" class="btn-ghost hidden">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- LOGIN -->
+  <div id="loginCard" class="card">
+    <h2 style="margin-bottom:10px">Login Admin</h2>
+    <label>Username</label>
+    <input id="loginUser" placeholder="Admin">
+    <label>Password</label>
+    <input id="loginPass" type="password" placeholder="Admin123">
+    <div style="display:flex;gap:8px">
+      <button id="loginBtn">Login</button>
+      <button id="demoBtn" class="btn-ghost">Demo (read-only)</button>
+    </div>
+    <p class="small" style="margin-top:8px">Login client-side sederhana. Untuk produksi — aktifkan Firebase Auth & rules.</p>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panel" class="hidden">
+
+    <!-- Status Toko -->
+    <section class="card">
+      <h3>Status Toko</h3>
+      <div class="flex" style="margin-top:8px">
+        <button onclick="setStatus('1')">Buka Toko</button>
+        <button onclick="setStatus('0')" style="background:linear-gradient(90deg,#ff7b7b,#ff3b3b)">Tutup Toko</button>
+        <div style="margin-left:auto" class="small">Nilai saat ini: <b id="statusValue">—</b></div>
+      </div>
+    </section>
+
+    <!-- Nomor WA -->
+    <section class="card">
+      <h3>Nomor WhatsApp</h3>
+      <div class="row">
+        <div>
+          <label>Nomor WA (format 628...)</label>
+          <input id="inputWA" placeholder="6287867162459">
+          <div class="flex"><button onclick="saveWA()">Simpan Nomor</button><button class="btn-ghost" onclick="testWA()">Test Buka WA</button></div>
+        </div>
+        <div>
+          <label>Preview</label>
+          <div class="card small" id="waPreview">-</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Harga Paket -->
+    <section class="card">
+      <h3>Harga Paket</h3>
+      <div class="row">
+        <div>
+          <label>Paket Express (Rp)</label>
+          <input id="hargaExpressInput" type="number" min="0">
+          <label>Paket Basic (Rp)</label>
+          <input id="hargaBasicInput" type="number" min="0">
+          <label>Paket Premium (Rp)</label>
+          <input id="hargaPremiumInput" type="number" min="0">
+          <div style="display:flex;gap:8px"><button onclick="saveHarga()">Simpan Harga</button><button class="btn-ghost" onclick="resetHarga()">Reset</button></div>
+        </div>
+        <div>
+          <label>Preview Web Utama</label>
+          <div class="card small" id="hargaPreview">-</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero / Marquee -->
+    <section class="card">
+      <h3>Hero / Marquee</h3>
+      <label>Judul Hero</label>
+      <input id="heroTitleInput">
+      <label>Subtitle (boleh HTML sederhana)</label>
+      <textarea id="heroSubInput" rows="3"></textarea>
+      <label>Marquee (running text)</label>
+      <input id="heroMarqueeInput">
+      <label>Price range text</label>
+      <input id="heroPriceRangeInput" placeholder="2K – 7K">
+      <div style="display:flex;gap:8px;margin-top:8px"><button onclick="saveHero()">Simpan</button><button class="btn-ghost" onclick="resetHero()">Reset Default</button></div>
+    </section>
+
+    <!-- Rekomendasi -->
+    <section class="card">
+      <h3>Rekomendasi</h3>
+      <label>Text rekomendasi</label>
+      <textarea id="inputRekom" rows="2"></textarea>
+      <div style="display:flex;gap:8px"><button onclick="saveRekom()">Simpan Rekomendasi</button></div>
+    </section>
+
+    <!-- Portfolio -->
+    <section class="card">
+      <h3>Portfolio</h3>
+      <label>Tambah URL gambar</label>
+      <input id="urlPortfolio" placeholder="https://...">
+      <div style="display:flex;gap:8px;margin-bottom:8px"><button onclick="addPortfolio()">Tambah</button><button class="btn-ghost" onclick="clearPortfolio()">Hapus Semua</button></div>
+      <div id="adminPortfolioList" class="list">Memuat...</div>
+    </section>
+
+    <!-- Orders -->
+    <section class="card">
+      <h3>Orders Masuk</h3>
+      <div id="orderList" class="list">Memuat...</div>
+      <div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportOrders()">Export JSON</button></div>
+    </section>
+
+    <!-- Deposits -->
+    <section class="card">
+      <h3>Deposit</h3>
+      <div class="row">
+        <div>
+          <label>Nama</label><input id="depNama">
+          <label>Jumlah (Rp)</label><input id="depJumlah" type="number" min="1000">
+          <div style="display:flex;gap:8px;margin-top:8px"><button onclick="addDeposit()">Tambah Deposit</button></div>
+        </div>
+        <div>
+          <label>Riwayat</label>
+          <div id="depositList" class="list">Memuat...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tools -->
+    <section class="card">
+      <h3>Tools / Notif</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="openMain()">Buka Web Utama</button>
+        <button onclick="reload()">Reload Panel</button>
+        <button class="btn-ghost" onclick="sendTestNotif()">Kirim Notif Tes (serverless)</button>
+      </div>
+      <p class="small" style="margin-top:8px">Catatan: fitur notifikasi butuh endpoint serverless `/api/notif` di hostmu (contoh di README).</p>
+    </section>
+
+  </div>
+</div>
+
+<footer class="footer">© <span id="yearF"></span> XINNDESAINER — Admin Panel</footer>
+
+<!-- Firebase v8 (compat) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+/* ================================
+   CONFIG FIREBASE (isi config-mu)
+   Pastikan ini cocok dengan project Firebase
+================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyB4L9CUFN049AytK8b3xxT-qC7WPVcagOw",
+  authDomain: "xinndesainer-web.firebaseapp.com",
+  databaseURL: "https://xinndesainer-web-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "xinndesainer-web",
+  storageBucket: "xinndesainer-web.firebasestorage.app",
+  messagingSenderId: "149928716168",
+  appId: "1:149928716168:web:80e99e60fb8531f0e4bc3d",
+  measurementId: "G-1GWM4KV6T2"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ================================
+   UTIL & LOGIN SEDERHANA
+================================ */
+function $(id){ return document.getElementById(id); }
+const ADMIN_USER = "Admin";
+const ADMIN_PASS = "Admin123";
+
+let readOnly = false; // demo
+
+// login handlers
+$("loginBtn").addEventListener("click", ()=>{
+  const u = $("loginUser").value.trim();
+  const p = $("loginPass").value.trim();
+  if(u === ADMIN_USER && p === ADMIN_PASS){
+    localStorage.setItem("xin_admin","1");
+    showPanel(false);
+  } else {
+    alert("Login gagal.");
+  }
+});
+$("demoBtn").addEventListener("click", ()=>{
+  localStorage.setItem("xin_admin","0");
+  showPanel(true);
+});
+$("logoutBtn").addEventListener("click", ()=>{
+  localStorage.removeItem("xin_admin");
+  location.reload();
+});
+function showPanel(ro){
+  readOnly = !!ro;
+  $("loginCard").classList.add("hidden");
+  $("panel").classList.remove("hidden");
+  if(!ro){ $("adminBadge").classList.remove("hidden"); $("logoutBtn").classList.remove("hidden"); }
+  init(); // start firebase listeners
+}
+if(localStorage.getItem("xin_admin")){
+  const ro = localStorage.getItem("xin_admin")==="0";
+  showPanel(ro);
+}
+
+/* ================================
+   REALTIME LISTENERS (web/*)
+================================ */
+function init(){
+  // connection status
+  firebase.database().ref(".info/connected").on("value", snap=>{
+    const isOn = !!snap.val();
+    $("connStatus").textContent = isOn ? "online" : "offline";
+    $("connStatus").className = isOn ? "kbd statusOnline" : "kbd statusOffline";
+  });
+
+  // status toko
+  db.ref("web/statusToko").on("value", snap=>{
+    const v = snap.exists() ? snap.val() : "1";
+    $("statusValue").textContent = v === "1" ? "BUKA" : "TUTUP";
+  });
+
+  // nomor WA
+  db.ref("web/nomorWA").on("value", snap=>{
+    const v = snap.exists() ? snap.val() : "6287867162459";
+    $("inputWA").value = v;
+    $("waPreview").innerHTML = `<div>https://wa.me/${v}</div>`;
+  });
+
+  // harga
+  db.ref("web/harga").on("value", snap=>{
+    const h = snap.val() || {};
+    $("hargaExpressInput").value = h.express || "";
+    $("hargaBasicInput").value = h.basic || "";
+    $("hargaPremiumInput").value = h.premium || "";
+    $("hargaPreview").innerHTML = `
+      Express: <b>${h.express||"-"}</b><br>
+      Basic: <b>${h.basic||"-"}</b><br>
+      Premium: <b>${h.premium||"-"}</b>
+    `;
+  });
+
+  // texts
+  db.ref("web/texts").on("value", snap=>{
+    const t = snap.val() || {};
+    $("heroTitleInput").value = t.title || "";
+    $("heroSubInput").value = t.subtitle || "";
+    $("heroMarqueeInput").value = t.marquee || "";
+    $("heroPriceRangeInput").value = t.priceRange || "";
+  });
+
+  // rekomendasi
+  db.ref("web/rekomendasi").on("value", snap=>{
+    $("inputRekom").value = snap.exists() ? snap.val() : "";
+  });
+
+  // portfolio list
+  db.ref("web/portfolio").on("value", snap=>{
+    const data = snap.val() || {};
+    const dom = $("adminPortfolioList");
+    dom.innerHTML = "";
+    const keys = Object.keys(data||{});
+    if(keys.length===0){ dom.innerHTML = "<div class='small'>Belum ada portfolio</div>"; return; }
+    keys.forEach(k=>{
+      const url = data[k];
+      const wrap = document.createElement("div");
+      wrap.style.display="flex";wrap.style.alignItems="center";wrap.style.gap="8px";wrap.style.padding="8px";wrap.style.borderBottom="1px dashed rgba(255,255,255,0.03)";
+      const img = document.createElement("img"); img.src=url; img.width=120; img.style.borderRadius="6px";
+      const meta = document.createElement("div"); meta.innerHTML = `<div class="small">${url}</div>`;
+      const btn = document.createElement("button"); btn.textContent="Hapus"; btn.className="btn-ghost";
+      btn.onclick = ()=>{ if(readOnly) return alert("Demo mode"); if(!confirm("Hapus?")) return; db.ref("web/portfolio/"+k).remove(); };
+      wrap.appendChild(img); wrap.appendChild(meta); wrap.appendChild(btn);
+      dom.appendChild(wrap);
+    });
+  });
+
+  // orders
+  db.ref("orders").on("value", snap=>{
+    const d = snap.val() || {};
+    const out = $("orderList");
+    out.innerHTML = "";
+    const ids = Object.keys(d||{}).reverse();
+    if(ids.length===0) out.innerHTML = "<div class='small'>Belum ada order</div>";
+    ids.forEach(id=>{
+      const o = d[id];
+      const box = document.createElement("div");
+      box.style.padding="8px"; box.style.borderBottom="1px dashed rgba(255,255,255,0.03)";
+      box.innerHTML = `<b>${o.nama||"-"}</b> — ${o.brand||"-"} <div class="small">${new Date(o.waktu).toLocaleString()}</div>
+        <div style="margin-top:6px">Paket: ${o.paket||"-"} | Style: ${o.style||"-"}</div>
+        <div class="small" style="margin-top:6px">Detail: ${o.detail||"-"}</div>
+      `;
+      const del = document.createElement("button"); del.textContent="Hapus"; del.className="btn-ghost";
+      del.onclick = ()=>{ if(readOnly) return alert("Demo mode"); if(!confirm("Hapus order?")) return; db.ref("orders/"+id).remove(); };
+      box.appendChild(del);
+      out.appendChild(box);
+    });
+  });
+
+  // deposits
+  db.ref("deposits").on("value", snap=>{
+    const d = snap.val() || {};
+    const out = $("depositList"); out.innerHTML = "";
+    const ids = Object.keys(d||{}).reverse();
+    if(ids.length===0) out.innerHTML = "<div class='small'>Belum ada deposit</div>";
+    ids.forEach(id=>{
+      const it = d[id];
+      const el = document.createElement("div");
+      el.style.padding="8px"; el.style.borderBottom="1px dashed rgba(255,255,255,0.03)";
+      el.innerHTML = `<b>${it.nama}</b> - Rp ${Number(it.jumlah).toLocaleString()} <div class="small">${new Date(it.waktu).toLocaleString()}</div>`;
+      out.appendChild(el);
+    });
+  });
+}
+
+/* ================================
+   ACTIONS: save / set
+================================ */
+function setStatus(v){
+  if(readOnly) return alert("Demo mode");
+  db.ref("web/statusToko").set(String(v)).then(()=>alert("Status disimpan"));
+}
+function saveWA(){
+  if(readOnly) return alert("Demo mode");
+  const v = $("inputWA").value.trim();
+  if(!v) return alert("Isi nomor");
+  db.ref("web/nomorWA").set(v).then(()=>alert("Nomor WA diperbarui"));
+}
+function testWA(){
+  const v = $("inputWA").value.trim() || "6287867162459";
+  window.open(`https://wa.me/${v}`, "_blank");
+}
+function saveHarga(){
+  if(readOnly) return alert("Demo mode");
+  const obj = { express: $("hargaExpressInput").value||"", basic: $("hargaBasicInput").value||"", premium: $("hargaPremiumInput").value||"" };
+  db.ref("web/harga").set(obj).then(()=>alert("Harga disimpan"));
+}
+function resetHarga(){
+  if(readOnly) return alert("Demo mode");
+  db.ref("web/harga").set({ express:"2000", basic:"5000", premium:"7000" }).then(()=>alert("Harga reset"));
+}
+function saveHero(){
+  if(readOnly) return alert("Demo mode");
+  const obj = { title:$("heroTitleInput").value||"", subtitle:$("heroSubInput").value||"", marquee:$("heroMarqueeInput").value||"", priceRange:$("heroPriceRangeInput").value||"" };
+  db.ref("web/texts").set(obj).then(()=>alert("Text hero disimpan"));
+}
+function resetHero(){
+  if(readOnly) return alert("Demo mode");
+  const def = { title:"XINNDESAINER", subtitle:"Solusi desain logo profesional & cepat.", marquee:"✨ GRAND OPENING — DESAIN LOGO PREMIUM MULAI 2K ✨", priceRange:"2K – 7K" };
+  db.ref("web/texts").set(def).then(()=>alert("Hero direset"));
+}
+function saveRekom(){
+  if(readOnly) return alert("Demo mode");
+  const v = $("inputRekom").value||"";
+  db.ref("web/rekomendasi").set(v).then(()=>alert("Rekomendasi disimpan"));
+}
+function addPortfolio(){
+  if(readOnly) return alert("Demo mode");
+  const url = $("urlPortfolio").value.trim();
+  if(!url) return alert("Isi URL");
+  db.ref("web/portfolio").push(url).then(()=>{ $("urlPortfolio").value=""; alert("Portfolio ditambahkan"); });
+}
+function clearPortfolio(){
+  if(readOnly) return alert("Demo mode");
+  if(!confirm("Hapus semua portfolio?")) return;
+  db.ref("web/portfolio").remove().then(()=>alert("Semua portfolio dihapus"));
+}
+function addDeposit(){
+  if(readOnly) return alert("Demo mode");
+  const nama = $("depNama").value.trim(); const jum = Number($("depJumlah").value);
+  if(!nama || !jum) return alert("Isi data");
+  db.ref("deposits").push({ nama, jumlah: jum, waktu: Date.now() }).then(()=>{ $("depNama").value=""; $("depJumlah").value=""; alert("Deposit ditambahkan"); });
+}
+function exportOrders(){
+  db.ref("orders").once("value").then(snap=>{
+    const data = snap.val()||{};
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href=url; a.download="orders.json"; a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+/* ================================
+   SERVERLESS NOTIF (placeholder)
+   - Ideally implement /api/notif on server (vercel)
+================================ */
+function sendTestNotif(){
+  // example payload; your serverless should accept this and call WhatsApp API
+  const payload = { title:"TEST NOTIF", body:"Pesan test dari admin panel", waktu: Date.now() };
+  fetch("/api/notif", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) })
+    .then(r=>r.json()).then(j=>alert("Resp: " + JSON.stringify(j))).catch(e=>alert("Gagal panggil /api/notif (lihat console)"));
+}
+
+function openMain(){ window.open("/", "_blank"); }
+function reload(){ location.reload(); }
+
+document.getElementById("yearF").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
